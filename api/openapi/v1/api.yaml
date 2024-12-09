@@ -1,0 +1,575 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: Meower REST API
+  description: API for common CRUD operations.
+
+servers:
+  - url: https://meower.com/{basePath}
+    description: The production API server.
+    variables:
+      basePath:
+        default: api/web/v1
+
+security:
+  - oAuth:
+    - general
+
+paths:
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Unique identifier of the user.
+        schema:
+          type: string
+    get:
+      tags:
+        - user
+      summary: Returns a variety of information about a single user specified by the requested ID.
+      responses:
+        '200':
+          description: User info.
+          content: 
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/UserShortProjection'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/me:
+    get:
+      tags:
+        - user
+      summary: Returns information about an authorized user.
+      responses:
+        '200':
+          description: User info.
+          content: 
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - user
+      summary: Update information about an authorized user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          
+  /users/by/username/{username}:
+    get:
+      tags:
+        - user
+      summary: Returns a variety of information about user specified by username.
+      parameters:
+        - name: username
+          in: path
+          required: true
+          description: The username (handle) of the user.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User info.
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/UserShortProjection'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /posts/:
+    post:
+      tags:
+        - post
+      summary: Creates a post on behalf of an authenticated user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MutatedPost'
+      responses:
+        '201':
+          description: Post created.
+          content: 
+            application/json: 
+              schema:
+                $ref: '#/components/schemas/PostIdResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /posts/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The id of the post.
+        schema:
+          type: string
+    get:
+      tags:
+        - post
+      summary: Returns a variety of information about a single post specified by the requested ID.
+      parameters:
+        - name: expansions
+          description: Expansions enable you to request additional data objects that relate to the originally returned post. 
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/PostExpansion"
+      responses:
+        '200':
+          description: The post.
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/PostResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags:
+        - post
+      summary: Update information about a single post specified by the requested ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MutatedPost'
+      responses:
+        '200':
+          description: Post updated.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - post
+      summary: Delete a post by the requested ID.
+      responses:
+        '200':
+          description: Post deleted.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}/following:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The authenticated user ID who you would like to initiate the follow on behalf of.
+        schema:
+          type: string
+    post:
+      tags:
+        - relation
+      summary: Allows a user ID to follow another user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserIdRequest'
+      responses:
+        '201':
+          description: User followed.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{sourceUserId}/following/{targetUserId}:
+    delete:
+      tags:
+        - relation
+      summary: Allows a user ID to unfollow another user.
+      parameters:
+        - name: sourceUserId
+          in: path
+          required: true
+          description: The user ID who you would like to initiate the unfollow on behalf of.
+          schema:
+            type: string
+        - name: targetUserId
+          in: path
+          required: true
+          description: The user ID of the user that you would like the source_user_id to unfollow.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User unfollowed.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+                
+  /users/{id}/muting:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The user ID who you would like to initiate the mute on behalf of.
+        schema:
+          type: string
+    post:
+      tags:
+        - relation
+      summary: Allows an authenticated user ID to mute the target user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserIdRequest'
+      responses:
+        '201':
+          description: User muted.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{sourceUserId}/muting/{targetUserId}:
+    delete:
+      tags:
+        - relation
+      summary: Allows an authenticated user ID to unmute the target user.
+      parameters:
+        - name: sourceUserId
+          in: path
+          required: true
+          description: The user ID who you would like to initiate an unmute on behalf of.
+          schema:
+            type: string
+        - name: targetUserId
+          in: path
+          required: true
+          description: The user ID of the user that you would like the source_user_id to unmute.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User unmuted.
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /users/{id}/posts:
+    get:
+      tags:
+        - timeline
+      summary: Returns posts composed by a single user, specified by the requested user ID.
+      parameters:
+        - name: pageToken
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: The token to get the next page of results.
+        - name: maxPageSize
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 100
+          description: The maximum number of items to return.
+        - name: expansions
+          description: Expansions enable you to request additional data objects that relate to the originally returned post. 
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/PostExpansion"
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the account (user ID) for whom to return results. 
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recent posts and reposts posted by target user.
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ListPostResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+                
+  /users/{id}/timeline:
+    get:
+      tags:
+        - timeline
+      summary: Allows you to retrieve a collection of the most recent posts and reposts posted by you and users you follow.
+      parameters:
+        - name: pageToken
+          in: query
+          schema:
+            type: string
+            default: ""
+          description: The token to get the next page of results.
+        - name: maxPageSize
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 100
+          description: The maximum number of items to return.
+        - name: expansions
+          description: Expansions enable you to request additional data objects that relate to the originally returned post. 
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/PostExpansion"
+        - name: id
+          in: path
+          required: true
+          description: Unique identifier of the user that is requesting their chronological home timeline.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recent posts and reposts posted by you and users you follow.
+          content: 
+            application/json: 
+              schema: 
+                $ref: '#/components/schemas/ListPostResponse'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    oAuth:
+      type: oauth2
+      description: This API uses OAuth2 with the “Authorization Code with Proof Key of Code Exchange (PKCE)” (RFC7636) flow.
+      flows:
+         authorizationCode:
+          authorizationUrl: https://auth.meower.com/oauth/v2/authorize
+          tokenUrl: https://auth.meower.com/oauth/v2/token
+          refreshUrl: https://auth.meower.com/oauth/v2/token
+          scopes:
+            general: ""
+  schemas:
+    MutatedPost:
+      type: object
+      properties:
+        text:
+          type: string
+          description: Text of the post.
+      required:
+        - text
+        
+    PostIdResponse:
+      description: The returned by operation post ID.
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id of the post.
+      required:
+        - id
+
+    UserIdRequest:
+      type: object
+      properties:
+        target_user_id:
+          type: string
+          description: The user ID of the user that you would like the id to operation.
+          example: 9m4e2mr0ui3e8a215n4g
+      required:
+        - id
+
+    UserShortProjection:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id of the user.
+          example: 9m4e2mr0ui3e8a215n4g
+        username:
+          type: string
+          description: The username (handle) of the user.
+          example: NArmstrong
+        name:
+          type: string
+          description: The name of the user.
+          example: Neil Armstrong
+        imageUrl:
+          type: string
+          format: uri
+          description: The image url of the user.
+        statusText:
+          type: string
+          description: The status text of the user.
+          example: That's one small step for man. One giant leap for mankind.
+      required:
+        - id
+        - username
+        - name
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id of the post.
+          example: 9m4e2mr0ui3e8a215n4g
+        text:
+          type: string
+          description: Text of the post.
+          example: That’s one small step for a man, but one giant leap for mankind.
+        authorId:
+          type: string
+          description: User ID of the author.
+          example: 9m4e2mr0ui3e8a215n4g
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date and time of the post last update.
+      required:
+        - id
+        - text
+        - authorId
+        - updatedAt
+        
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The id of the user.
+          example: 9m4e2mr0ui3e8a215n4g
+        username:
+          type: string
+          description: The username (handle) of the user.
+          example: NArmstrong
+        name:
+          type: string
+          description: The name of the user.
+          minLength: 1
+          maxLength: 50
+          example: Neil Armstrong
+        imageUrl:
+          type: string
+          format: uri
+          description: The image url of the user.
+        statusText:
+          type: string
+          description: The status text of the user.
+          maxLength: 200
+          example: That's one small step for man. One giant leap for mankind.
+      required:
+        - id
+        - username
+        - name
+        - imageUrl
+        - statusText
+
+    PostExpansion:
+      type: string
+      enum:
+        - author_id
+        
+    PostResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Post'
+        includes:
+          type: object
+          properties:
+            users:
+              type: array
+              items: 
+                $ref: '#/components/schemas/User'
+      required:
+        - data
+        
+    ListPostResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        includes:
+          type: object
+          properties:
+            users:
+              type: array
+              items: 
+                $ref: '#/components/schemas/User'
+      required:
+        - data
+        
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Description of the error.
+      required:
+        - error
