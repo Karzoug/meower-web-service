@@ -1,4 +1,4 @@
 package: gen
 generate:
   models: true
-output: internal/delivery/http/gen/models.gen.go
+output: internal/delivery/http/gen/web/v1/models.gen.go

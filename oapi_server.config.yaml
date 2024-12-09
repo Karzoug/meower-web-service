@@ -1,5 +1,5 @@
 package: gen
-output: internal/delivery/http/gen/rest.gen.go
+output: internal/delivery/http/gen/web/v1/rest.gen.go
 generate:
   embedded-spec: true
   strict-server: true
