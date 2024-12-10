@@ -4,13 +4,13 @@ import (
 	"context"
 
 	"github.com/Karzoug/meower-common-go/ucerr"
-	"github.com/Karzoug/meower-web-service/internal/entity"
 	"github.com/rs/xid"
 	"google.golang.org/grpc/codes"
+
+	"github.com/Karzoug/meower-web-service/internal/entity"
 )
 
-type PostsUseCase struct {
-}
+type PostsUseCase struct{}
 
 func NewPostsUseCase() PostsUseCase {
 	return PostsUseCase{}
@@ -27,7 +27,6 @@ func (uc PostsUseCase) DeletePost(ctx context.Context, authUserID, postID xid.ID
 }
 
 func (uc PostsUseCase) GetPost(ctx context.Context, postID xid.ID, opts ReturnPostOptions) (entity.Post, error) {
-
 	return entity.Post{}, ucerr.NewError(nil, "not implemented", codes.Unimplemented)
 }
 

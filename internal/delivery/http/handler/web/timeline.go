@@ -6,10 +6,11 @@ import (
 	"slices"
 
 	"github.com/Karzoug/meower-common-go/auth"
+	"github.com/rs/xid"
+
 	gen "github.com/Karzoug/meower-web-service/internal/delivery/http/gen/web/v1"
 	"github.com/Karzoug/meower-web-service/internal/delivery/http/httperr"
 	"github.com/Karzoug/meower-web-service/internal/usecase"
-	"github.com/rs/xid"
 )
 
 // Returns a collection of recent posts by the user and users they follow.
