@@ -2,18 +2,17 @@ package entity
 
 import (
 	"time"
-
-	"github.com/rs/xid"
 )
 
 type Post struct {
-	ID        xid.ID
+	ID        string
 	Text      string `validate:"required,min=1,max=280"`
-	AuthorID  xid.ID
+	AuthorID  string
 	IsDeleted bool
 	UpdatedAt time.Time
 }
 
 type NewPost struct {
-	Text string `validate:"required,min=1,max=280"`
+	AuthorID string
+	Text     string `validate:"required,min=1,max=280"`
 }

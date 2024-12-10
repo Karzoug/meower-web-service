@@ -26,7 +26,7 @@ type ErrorResponse struct {
 type ListPostResponse struct {
 	Data     []Post `json:"data"`
 	Includes *struct {
-		Users *[]User `json:"users,omitempty"`
+		Users []UserShortProjection `json:"users,omitempty"`
 	} `json:"includes,omitempty"`
 }
 
@@ -64,7 +64,7 @@ type PostIdResponse struct {
 type PostResponse struct {
 	Data     Post `json:"data"`
 	Includes *struct {
-		Users *[]User `json:"users,omitempty"`
+		Users []UserShortProjection `json:"users,omitempty"`
 	} `json:"includes,omitempty"`
 }
 

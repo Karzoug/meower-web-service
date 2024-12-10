@@ -26,17 +26,7 @@ func (h handlers) GetUsersByUsernameUsername(ctx context.Context, request gen.Ge
 // Returns information about an authorized user.
 // (GET /users/me).
 func (h handlers) GetUsersMe(ctx context.Context, request gen.GetUsersMeRequestObject) (gen.GetUsersMeResponseObject, error) {
-	const op = "GET /users/me"
-
-	userID := auth.UserIDFromContext(ctx)
-	if userID.IsZero() {
-		h.logger.Error().
-			Str("operation", op).
-			Msg("bug: user id is nil")
-		return nil, httperr.NewError("empty auth data", http.StatusUnauthorized)
-	}
-
-	u, err := h.usersUsecase.GetMe(ctx, userID)
+	u, err := h.usersUsecase.GetMe(ctx, auth.UserIDFromContext(ctx))
 	if err != nil {
 		return nil, err
 	}
@@ -47,18 +37,8 @@ func (h handlers) GetUsersMe(ctx context.Context, request gen.GetUsersMeRequestO
 // Update information about an authorized user.
 // (PUT /users/me).
 func (h handlers) PutUsersMe(ctx context.Context, request gen.PutUsersMeRequestObject) (gen.PutUsersMeResponseObject, error) {
-	const op = "PUT /users/me"
-
 	if request.Body == nil {
 		return nil, httperr.NewError("request body is nil", http.StatusBadRequest)
-	}
-
-	userID := auth.UserIDFromContext(ctx)
-	if userID.IsZero() {
-		h.logger.Error().
-			Str("operation", op).
-			Msg("bug: user id is nil")
-		return nil, httperr.NewError("empty auth data", http.StatusUnauthorized)
 	}
 
 	u, err := fromGenUser(*request.Body)
@@ -66,7 +46,7 @@ func (h handlers) PutUsersMe(ctx context.Context, request gen.PutUsersMeRequestO
 		return nil, httperr.NewError("invalid request body", http.StatusBadRequest)
 	}
 
-	if err := h.usersUsecase.UpdateMe(ctx, userID, u); err != nil {
+	if err := h.usersUsecase.UpdateMe(ctx, auth.UserIDFromContext(ctx), u); err != nil {
 		return nil, err
 	}
 
@@ -89,13 +69,21 @@ func (h handlers) GetUsersId(ctx context.Context, request gen.GetUsersIdRequestO
 	return gen.GetUsersId200JSONResponse(toGenUserShortProjection(u)), nil
 }
 
+func toGenUserShortProjections(u []entity.UserProjection) []gen.UserShortProjection {
+	users := make([]gen.UserShortProjection, len(u))
+	for i := range u {
+		users[i] = toGenUserShortProjection(u[i])
+	}
+	return users
+}
+
 func toGenUserShortProjection(u entity.UserProjection) gen.UserShortProjection {
 	return gen.UserShortProjection{
 		Username:   u.Username,
 		Name:       u.Name,
 		ImageUrl:   notEmptyOrNil(u.ImageUrl),
 		StatusText: notEmptyOrNil(u.StatusText),
-		Id:         u.ID.String(),
+		Id:         u.ID,
 	}
 }
 
@@ -105,16 +93,13 @@ func toGenUser(u entity.User) gen.User {
 		Name:       u.Name,
 		ImageUrl:   u.ImageUrl,
 		StatusText: u.StatusText,
-		Id:         u.ID.String(),
+		Id:         u.ID,
 	}
 }
 
 func fromGenUser(u gen.User) (entity.User, error) {
-	id, err := xid.FromString(u.Id)
-	if err != nil {
-	}
 	return entity.User{
-		ID:         id,
+		ID:         u.Id,
 		Username:   u.Username,
 		Name:       u.Name,
 		ImageUrl:   u.ImageUrl,

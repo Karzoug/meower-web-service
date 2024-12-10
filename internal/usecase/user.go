@@ -8,11 +8,14 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/Karzoug/meower-web-service/internal/entity"
+	"github.com/Karzoug/meower-web-service/internal/usecase/client/grpc/user"
 )
 
-type UsersUseCase struct{}
+type UsersUseCase struct {
+	userServiceClient user.Client
+}
 
-func NewUsersUseCase() UsersUseCase {
+func NewUsersUseCase(userClient user.Client) UsersUseCase {
 	return UsersUseCase{}
 }
 

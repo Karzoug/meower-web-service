@@ -294,7 +294,7 @@ paths:
     get:
       tags:
         - timeline
-      summary: Returns posts composed by a single user, specified by the requested user ID.
+      summary: Returns most recent posts composed a specified user ID
       security: []      
       parameters:
         - name: pageToken
@@ -490,6 +490,8 @@ components:
         username:
           type: string
           description: The username (handle) of the user.
+          minLength: 3
+          maxLength: 50
           example: NArmstrong
         name:
           type: string
@@ -528,8 +530,9 @@ components:
           properties:
             users:
               type: array
+              x-go-type-skip-optional-pointer: true
               items: 
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserShortProjection'
       required:
         - data
         
@@ -545,8 +548,9 @@ components:
           properties:
             users:
               type: array
+              x-go-type-skip-optional-pointer: true
               items: 
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserShortProjection'
       required:
         - data
         

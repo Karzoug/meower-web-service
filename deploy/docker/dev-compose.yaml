@@ -34,6 +34,9 @@ services:
       OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
       OTEL_EXPORTER_OTLP_INSECURE: true
       LOG_LEVEL: debug
+      POST_SERVICE_URI: post-service:3001
+      USER_SERVICE_URI: user-service:3001
+      TIMELINE_SERVICE_URI: timeline-service:3001
     ports:
        - 3000:3000
     #   - 3002:3002

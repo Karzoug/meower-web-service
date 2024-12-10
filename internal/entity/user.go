@@ -1,11 +1,7 @@
 package entity
 
-import (
-	"github.com/rs/xid"
-)
-
 type User struct {
-	ID         xid.ID
+	ID         string
 	Username   string
 	Name       string
 	ImageUrl   string
@@ -13,7 +9,7 @@ type User struct {
 }
 
 type UserProjection struct {
-	ID         xid.ID
+	ID         string
 	Username   string
 	Name       string
 	ImageUrl   string

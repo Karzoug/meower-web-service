@@ -6,12 +6,11 @@ import (
 	"slices"
 
 	"github.com/Karzoug/meower-common-go/auth"
-	"github.com/rs/xid"
 
 	gen "github.com/Karzoug/meower-web-service/internal/delivery/http/gen/web/v1"
 	"github.com/Karzoug/meower-web-service/internal/delivery/http/httperr"
 	"github.com/Karzoug/meower-web-service/internal/entity"
-	"github.com/Karzoug/meower-web-service/internal/usecase"
+	"github.com/Karzoug/meower-web-service/internal/usecase/option"
 )
 
 // Creates a post on behalf of an authenticated user.
@@ -32,36 +31,22 @@ func (h handlers) PostPosts(ctx context.Context, request gen.PostPostsRequestObj
 	}
 
 	p, err := h.postsUsecase.CreatePost(ctx, userID, entity.NewPost{
-		Text: request.Body.Text,
+		AuthorID: userID.String(),
+		Text:     request.Body.Text,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return gen.PostPosts201JSONResponse{
-		Id: p.ID.String(),
+		Id: p.ID,
 	}, nil
 }
 
 // Delete a post by the requested ID.
 // (DELETE /posts/{id}).
 func (h handlers) DeletePostsId(ctx context.Context, request gen.DeletePostsIdRequestObject) (gen.DeletePostsIdResponseObject, error) {
-	const op = "DELETE /posts/{id}"
-
-	postID, err := xid.FromString(request.Id)
-	if err != nil {
-		return nil, httperr.NewError("invalid post id format", http.StatusBadRequest)
-	}
-
-	userID := auth.UserIDFromContext(ctx)
-	if userID.IsZero() {
-		h.logger.Error().
-			Str("operation", op).
-			Msg("bug: user id is nil")
-		return nil, httperr.NewError("empty auth data", http.StatusUnauthorized)
-	}
-
-	if err := h.postsUsecase.DeletePost(ctx, userID, postID); err != nil {
+	if err := h.postsUsecase.DeletePost(ctx, auth.UserIDFromContext(ctx), request.Id); err != nil {
 		return nil, err
 	}
 
@@ -71,38 +56,37 @@ func (h handlers) DeletePostsId(ctx context.Context, request gen.DeletePostsIdRe
 // Returns a variety of information about a single post specified by the requested ID.
 // (GET /posts/{id}).
 func (h handlers) GetPostsId(ctx context.Context, request gen.GetPostsIdRequestObject) (gen.GetPostsIdResponseObject, error) {
-	// const op = "GET /posts/{id}"
-
-	h.logger.Debug().
-		Any("request", request).
-		Msg("got request")
-
-	postID, err := xid.FromString(request.Id)
-	if err != nil {
-		return nil, httperr.NewError("invalid post id format", http.StatusBadRequest)
-	}
-
-	opts := usecase.ReturnPostOptions{}
+	opts := option.ReturnPost{}
 	if request.Params.Expansions != nil {
 		if slices.Contains(*request.Params.Expansions, gen.AuthorId) {
 			opts.IncludeUser = true
 		}
 	}
 
-	p, err := h.postsUsecase.GetPost(ctx, postID, opts)
+	res, err := h.postsUsecase.GetPost(ctx, auth.UserIDFromContext(ctx), request.Id, opts)
 	if err != nil {
 		return nil, err
 	}
+	resp := gen.GetPostsId200JSONResponse{
+		Data: toGenPost(res.Post),
+	}
 
-	return gen.GetPostsId200JSONResponse{
-		Data: toGenPost(p),
-	}, nil
+	if len(res.Authors) != 0 {
+		incl := struct {
+			Users []gen.UserShortProjection `json:"users,omitempty"`
+		}{
+			Users: toGenUserShortProjections(res.Authors),
+		}
+		resp.Includes = &incl
+	}
+
+	return resp, nil
 }
 
 func toGenPost(post entity.Post) gen.Post {
 	return gen.Post{
-		AuthorId:  post.ID.String(),
-		Id:        post.ID.String(),
+		AuthorId:  post.AuthorID,
+		Id:        post.ID,
 		Text:      post.Text,
 		UpdatedAt: post.UpdatedAt,
 	}

@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"time"
 
@@ -18,6 +19,9 @@ import (
 	webHttp "github.com/Karzoug/meower-web-service/internal/delivery/http/handler/web"
 	httpServer "github.com/Karzoug/meower-web-service/internal/delivery/http/server"
 	"github.com/Karzoug/meower-web-service/internal/usecase"
+	"github.com/Karzoug/meower-web-service/internal/usecase/client/grpc/post"
+	"github.com/Karzoug/meower-web-service/internal/usecase/client/grpc/timeline"
+	"github.com/Karzoug/meower-web-service/internal/usecase/client/grpc/user"
 	"github.com/Karzoug/meower-web-service/pkg/buildinfo"
 )
 
@@ -69,8 +73,26 @@ func Run(ctx context.Context, logger zerolog.Logger) error {
 	}
 	defer doClose(shutdownMeter, logger)
 
-	usersUsecase := usecase.NewUsersUseCase()
-	postUsecases := usecase.NewPostsUseCase()
+	// set up user service grpc client
+	userClient, err := user.NewServiceClient(cfg.UserService)
+	if err != nil {
+		return fmt.Errorf("could not connect to post microservice: %w", err)
+	}
+
+	// set up post service grpc client
+	postClient, err := post.NewServiceClient(cfg.PostService)
+	if err != nil {
+		return fmt.Errorf("could not connect to post microservice: %w", err)
+	}
+
+	// set up timeline service grpc client
+	timelineClient, err := timeline.NewServiceClient(cfg.TimelineService)
+	if err != nil {
+		return fmt.Errorf("could not connect to relation microservice: %w", err)
+	}
+
+	usersUsecase := usecase.NewUsersUseCase(userClient)
+	postUsecases := usecase.NewPostsUseCase(postClient, userClient, timelineClient, logger)
 
 	// set up http server
 	httpSrv := httpServer.New(
