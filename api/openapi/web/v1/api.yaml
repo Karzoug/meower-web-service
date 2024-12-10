@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  version: 1.0.0
+  version: 1.1.0
   title: Meower REST API
   description: API for common CRUD operations.
 
@@ -28,6 +28,7 @@ paths:
       tags:
         - user
       summary: Returns a variety of information about a single user specified by the requested ID.
+      security: []
       responses:
         '200':
           description: User info.
@@ -62,7 +63,7 @@ paths:
     put:
       tags:
         - user
-      summary: Update information about an authorized user.
+      summary: Update information about an authorized user.    
       requestBody:
         required: true
         content:
@@ -84,6 +85,7 @@ paths:
       tags:
         - user
       summary: Returns a variety of information about user specified by username.
+      security: []
       parameters:
         - name: username
           in: path
@@ -141,6 +143,7 @@ paths:
       tags:
         - post
       summary: Returns a variety of information about a single post specified by the requested ID.
+      security: []
       parameters:
         - name: expansions
           description: Expansions enable you to request additional data objects that relate to the originally returned post. 
@@ -156,25 +159,6 @@ paths:
             application/json: 
               schema: 
                 $ref: '#/components/schemas/PostResponse'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    put:
-      tags:
-        - post
-      summary: Update information about a single post specified by the requested ID.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MutatedPost'
-      responses:
-        '200':
-          description: Post updated.
         default:
           description: Error
           content:
@@ -311,6 +295,7 @@ paths:
       tags:
         - timeline
       summary: Returns posts composed by a single user, specified by the requested user ID.
+      security: []      
       parameters:
         - name: pageToken
           in: query

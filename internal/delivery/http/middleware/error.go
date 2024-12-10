@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"syscall"
 
@@ -16,7 +17,7 @@ import (
 	"github.com/Karzoug/meower-web-service/internal/delivery/http/response"
 )
 
-type httpCode interface {
+type httpStatus interface {
 	HTTPStatus() (int, string)
 }
 
@@ -29,9 +30,11 @@ func Error(logger zerolog.Logger) gen.StrictMiddlewareFunc {
 					return
 				}
 
+				logger.Debug().Str("error", fmt.Sprintf("%T %v", err, err)).Msg("error handler")
+
 				var switchErr error
 				switch e := err.(type) { //nolint:errorlint
-				case httpCode:
+				case httpStatus:
 					code, msg := e.HTTPStatus()
 					logOnlyServiceError(ctx, err, operationID, logger)
 					switchErr = response.JSON(w, code, gen.ErrorResponse{Error: msg})

@@ -14,6 +14,10 @@ import (
 	"github.com/Karzoug/meower-common-go/trace/otlp"
 
 	"github.com/Karzoug/meower-web-service/internal/config"
+	healthHandlers "github.com/Karzoug/meower-web-service/internal/delivery/http/handler/health"
+	webHttp "github.com/Karzoug/meower-web-service/internal/delivery/http/handler/web"
+	httpServer "github.com/Karzoug/meower-web-service/internal/delivery/http/server"
+	"github.com/Karzoug/meower-web-service/internal/usecase"
 	"github.com/Karzoug/meower-web-service/pkg/buildinfo"
 )
 
@@ -56,7 +60,7 @@ func Run(ctx context.Context, logger zerolog.Logger) error {
 	}
 	defer doClose(shutdownTracer, logger)
 
-	_ = otel.GetTracerProvider().Tracer(pkgName)
+	tracer := otel.GetTracerProvider().Tracer(pkgName)
 
 	// set up meter
 	shutdownMeter, err := prom.RegisterGlobal(ctxInit, serviceName, serviceVersion, metricNamespace)
@@ -65,7 +69,23 @@ func Run(ctx context.Context, logger zerolog.Logger) error {
 	}
 	defer doClose(shutdownMeter, logger)
 
+	usersUsecase := usecase.NewUsersUseCase()
+	postUsecases := usecase.NewPostsUseCase()
+
+	// set up http server
+	httpSrv := httpServer.New(
+		cfg.HTTP,
+		[]httpServer.Routes{
+			webHttp.RoutesFunc(usersUsecase, postUsecases, tracer, logger),
+			healthHandlers.RoutesFunc(logger),
+		},
+		logger)
+
 	eg, ctx := errgroup.WithContext(ctx)
+	// run service http server
+	eg.Go(func() error {
+		return httpSrv.Run(ctx)
+	})
 	// run prometheus metrics http server
 	eg.Go(func() error {
 		return prom.Serve(ctx, cfg.PromHTTP, logger)

@@ -6,12 +6,11 @@ import (
 
 	"github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 	"github.com/rs/xid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/Karzoug/meower-common-go/auth"
 
 	gen "github.com/Karzoug/meower-web-service/internal/delivery/http/gen/web/v1"
+	"github.com/Karzoug/meower-web-service/internal/delivery/http/httperr"
 )
 
 const authHeader = "X-USER-ID"
@@ -24,14 +23,14 @@ func AuthN(next nethttp.StrictHTTPHandlerFunc, operationID string) nethttp.Stric
 		if sub != "" {
 			id, err := xid.FromString(sub)
 			if err != nil {
-				return nil, status.Error(codes.Unauthenticated, "invalid user id")
+				return nil, httperr.NewError("invalid user id format", http.StatusBadRequest)
 			}
 			ctx = auth.WithUserID(ctx, id)
 		}
 
 		// if spec claim authentification
 		if ctx.Value(gen.OAuthScopes) != nil && sub == "" {
-			return nil, status.Error(codes.Unauthenticated, "unauthenticated")
+			return nil, httperr.NewError("unauthenticated", http.StatusUnauthorized)
 		}
 
 		return next(ctx, w, r, request)

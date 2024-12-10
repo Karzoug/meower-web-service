@@ -129,6 +129,11 @@ linters:
     - wastedassign
 
 issues:
+  exclude-rules:
+    - linters:
+        - stylecheck
+        - revive
+      path: internal/delivery/http/handler/web # many errors on generated names functions
 
 severity:
   default-severity: error

@@ -143,9 +143,6 @@ type GetUsersIdTimelineParams struct {
 // PostPostsJSONRequestBody defines body for PostPosts for application/json ContentType.
 type PostPostsJSONRequestBody = MutatedPost
 
-// PutPostsIdJSONRequestBody defines body for PutPostsId for application/json ContentType.
-type PutPostsIdJSONRequestBody = MutatedPost
-
 // PutUsersMeJSONRequestBody defines body for PutUsersMe for application/json ContentType.
 type PutUsersMeJSONRequestBody = User
 
